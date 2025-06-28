@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Email Dashboard</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: url("https://media.licdn.com/dms/image/v2/D5612AQGlfhE9IBQ8Bg/article-cover_image-shrink_720_1280/article-cover_image-shrink_720_1280/0/1693596641359?e=2147483647&v=beta&t=r7Ul99DWE8fm-HxxyeCKqa8wBhK_V23EaZnq6hY1_wc") no-repeat center center fixed;
+      background-size: cover;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .dashboard-container {
+      position: relative;
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(16px);
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      text-align: center;
+      z-index: 1;
+      max-width: 500px;
+      width: 90%;
+    }
+
+    h2 {
+      font-size: 28px;
+      font-weight: 700;
+      color: #2c3e50;
+      margin-bottom: 10px;
+    }
+
+    p {
+      color: #444;
+      margin-bottom: 30px;
+      font-size: 15px;
+    }
+
+    .btn-group {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .btn-group button {
+      padding: 12px 20px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border: 2px solid transparent;
+      background-color: white;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-group button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .inbox-btn {
+      border-color: #2196f3;
+      color: #2196f3;
+    }
+
+    .compose-btn {
+      border-color: #4caf50;
+      color: #4caf50;
+    }
+
+    .logout-btn {
+      border-color: #f44336;
+      color: #f44336;
+    }
+
+    .voice-btn {
+      margin-top: 10px;
+      background-color: #212529;
+      color: white;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      transition: background 0.2s ease;
+    }
+
+    .voice-btn:hover {
+      background-color: #343a40;
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard-container">
+    <h2>Email Dashboard</h2>
+    <p>Use the buttons or say: <strong>"inbox"</strong>, <strong>"compose"</strong>, or <strong>"logout"</strong>.</p>
+
+    <div class="btn-group">
+      <form action="/inbox" method="get">
+        <button type="submit" class="inbox-btn"><i class="fas fa-inbox"></i> Inbox</button>
+      </form>
+      <form action="/compose" method="get">
+        <button type="submit" class="compose-btn"><i class="fas fa-pen-nib"></i> Compose</button>
+      </form>
+      <form action="/logout" method="get">
+        <button type="submit" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+      </form>
+    </div>
+
+    <button class="voice-btn" onclick="startListening()">
+      <i class="fas fa-microphone"></i> Speak Command
+    </button>
+  </div>
+
+  <script>
+    function speak(text, callback) {
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.onend = () => {
+        if (callback) setTimeout(callback, 500); // slight delay before starting recognition
+      };
+      speechSynthesis.speak(utter);
+    }
+
+    function startListening() {
+      if (!('webkitSpeechRecognition' in window)) {
+        alert("Your browser does not support Speech Recognition. Try using Chrome.");
+        return;
+      }
+
+      const recognition = new webkitSpeechRecognition();
+      recognition.lang = "en-US";
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      recognition.onresult = function (event) {
+        const command = event.results[0][0].transcript.toLowerCase();
+        if (command.includes("inbox")) {
+          window.location.href = "/inbox";
+        } else if (command.includes("compose")) {
+          window.location.href = "/compose";
+        } else if (command.includes("logout")) {
+          window.location.href = "/logout";
+        } else {
+          // Do nothing if command is unrecognized
+          console.log("Unrecognized command:", command);
+        }
+      };
+
+      recognition.onerror = function (event) {
+        console.error("Speech recognition error:", event.error);
+      };
+
+      recognition.start();
+    }
+
+    // Voice prompt on page load
+    window.onload = function () {
+      speak("Welcome to your dashboard. Say inbox, compose, or logout.", () => {
+        startListening();
+      });
+    };
+  </script>
+</body>
+</html>

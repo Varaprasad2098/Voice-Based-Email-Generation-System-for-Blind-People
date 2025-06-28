@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Voice Login</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: url("{{ url_for('static', filename='images/Gemini.jpg') }}") no-repeat center center fixed;
+      background-size: cover;
+    }
+
+    .container {
+      max-width: 400px;
+      margin: 80px auto;
+      background: rgba(255, 255, 255, 0.92);
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+      padding: 32px;
+      text-align: center;
+    }
+
+    h2 {
+      color: #0b1f33;
+    }
+
+    .project-title {
+      font-size: 1rem;
+      color: #333;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+
+    input[type="text"], input[type="password"] {
+      width: 100%;
+      padding: 10px;
+      margin: 12px 0;
+      border: 2px solid #bbb;
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+
+    .password-toggle {
+      position: relative;
+    }
+
+    .toggle-icon {
+      position: absolute;
+      right: 16px;
+      top: 52%;
+      transform: translateY(-50%);
+      cursor: pointer;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: #0066cc;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-size: 1rem;
+      margin-top: 20px;
+      cursor: pointer;
+    }
+
+    .mic-hint {
+      font-size: 0.9rem;
+      color: #444;
+      margin-top: 16px;
+    }
+  </style>
+</head>
+<body onclick="startVoiceLoginFlow()">
+  <div class="container">
+    <div class="project-title">VOICE BASED EMAIL GENERATING SYSTEM FOR BLIND PEOPLE USING AI</div>
+    <h2>Voice Login</h2>
+    <form id="login-form" method="POST" action="/login">
+      <input type="text" name="username" id="email" placeholder="Email" required>
+      <div class="password-toggle">
+        <input type="password" name="password" id="password" placeholder="Password" required>
+        <img src="https://cdn-icons-png.flaticon.com/512/709/709612.png" alt="toggle" id="togglePassword" class="toggle-icon" width="24" height="24">
+      </div>
+      <button type="submit">Login</button>
+    </form>
+    <div class="mic-hint">Click anywhere to start voice assistant</div>
+  </div>
+
+  <script>
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const togglePassword = document.getElementById('togglePassword');
+
+    togglePassword.addEventListener('click', () => {
+      const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+      passwordInput.setAttribute('type', type);
+    });
+
+    function speak(text) {
+      const msg = new SpeechSynthesisUtterance(text);
+      window.speechSynthesis.speak(msg);
+    }
+
+    function sanitizeText(text) {
+      return text
+        .toLowerCase()
+        .replace(/\s+/g, '')
+        .replace(/attherate|attherateof/g, '@')
+        .replace(/dot/g, '.');
+    }
+
+    async function startVoiceLoginFlow() {
+      await speakAndListenForField("Welcome to voice based email generating system. Please say your email address after the beep.", emailInput);
+      await speakAndListenForField("Now say your password after the beep.", passwordInput);
+      await speakAndWaitForLogin();
+    }
+
+    async function speakAndListenForField(promptText, inputField) {
+      let confirmed = false;
+      while (!confirmed) {
+        speak(promptText);
+        await wait(6000); // wait before starting recognition
+        const value = sanitizeText(await recognizeSpeech());
+        inputField.value = value;
+        speak(`You said ${value}. Is this correct? Say yes, correct, or true. Otherwise say no.`);
+        await wait(8000); // ⬅️ more time for you to speak confirmation
+        confirmed = await waitForConfirmation();
+      }
+    }
+
+    async function speakAndWaitForLogin() {
+      speak("Say login to continue or stop to restart.");
+      await wait(6000);
+      const action = await waitForKeyword(["login", "stop"]);
+      if (action === "login") {
+        speak("Logging you in now.");
+        document.getElementById("login-form").submit();
+      } else {
+        speak("Login canceled. Restarting.");
+        location.reload();
+      }
+    }
+
+    function recognizeSpeech() {
+      return new Promise((resolve, reject) => {
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.lang = 'en-US';
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+        recognition.continuous = false;
+        recognition.start();
+
+        recognition.onresult = (event) => {
+          resolve(event.results[0][0].transcript);
+        };
+
+        recognition.onerror = () => {
+          speak("Sorry, I didn't catch that. Please try again.");
+          reject("Speech error");
+        };
+      });
+    }
+
+    function waitForConfirmation() {
+      return new Promise((resolve) => {
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.lang = 'en-US';
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+        recognition.continuous = false;
+        recognition.start();
+
+        recognition.onresult = (event) => {
+          const text = event.results[0][0].transcript.toLowerCase();
+          resolve(["yes", "correct", "true"].some(word => text.includes(word)));
+        };
+
+        recognition.onerror = () => resolve(false);
+      });
+    }
+
+    function waitForKeyword(keywords) {
+      return new Promise((resolve) => {
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.lang = 'en-US';
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+        recognition.continuous = false;
+        recognition.start();
+
+        recognition.onresult = (event) => {
+          const transcript = event.results[0][0].transcript.toLowerCase();
+          for (let keyword of keywords) {
+            if (transcript.includes(keyword)) {
+              resolve(keyword);
+              return;
+            }
+          }
+          resolve(null);
+        };
+
+        recognition.onerror = () => resolve(null);
+      });
+    }
+
+    function wait(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+  </script>
+</body>
+</html>

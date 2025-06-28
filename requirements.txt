@@ -1,0 +1,9 @@
+Flask
+Flask-SQLAlchemy
+Flask-Login
+SpeechRecognition
+pyaudio
+google-cloud-speech
+Flask-Mail
+celery
+redis
