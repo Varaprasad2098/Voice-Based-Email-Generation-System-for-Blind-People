@@ -8,7 +8,7 @@
 <img src="images/project-logo.png" alt="Logo" width="80" height="80">
 </a>
 
-<h3 align="center">Voice-Based Email Generation System for Blind People using AI</h3>
+<h3 align="center">Voice-Based Email Generating System for Blind People using AI</h3>
 
 <p align="center">
 An AI-powered voice-controlled email system designed to help visually impaired users send and manage emails effortlessly.
